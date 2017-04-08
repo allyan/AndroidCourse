@@ -33,26 +33,38 @@ class NamesAdapter extends ArrayAdapter<Person> implements View.OnClickListener 
         this.arrUser = arrUser;
     }
 
+
+    private class ViewHolder {
+        TextView nameTextView;
+        TextView phoneTextView;
+        ImageView imageView;
+        ImageView callButton;
+    }
+
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+        ViewHolder viewHolder;
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.list_item, parent, false);
+            viewHolder = new ViewHolder();
+            viewHolder.nameTextView = (TextView) convertView.findViewById(R.id.list_item_name_text_view);
+            viewHolder.phoneTextView = (TextView) convertView.findViewById(R.id.list_item_name_age_view);
+            viewHolder.imageView = (ImageView) convertView.findViewById(R.id.list_item_user_photo);
+            viewHolder.callButton = (ImageView) convertView.findViewById(R.id.list_item_call_button);
+            convertView.setTag(viewHolder);
         } else {
-
+            viewHolder = (ViewHolder) convertView.getTag();
         }
-        TextView nameTextView = (TextView) convertView.findViewById(R.id.list_item_name_text_view);
-        TextView phoneTextView = (TextView) convertView.findViewById(R.id.list_item_name_age_view);
-        ImageView imageView = (ImageView) convertView.findViewById(R.id.list_item_user_photo);
-        ImageView callButton = (ImageView) convertView.findViewById(R.id.list_item_call_button);
-        callButton.setClickable(true);
-        callButton.setTag(position);
-        callButton.setOnClickListener(this);
-        nameTextView.setText(arrUser.get(position).getName());
-        phoneTextView.setText(arrUser.get(position).getAge());
+
+        viewHolder.callButton.setClickable(true);
+        viewHolder.callButton.setTag(position);
+        viewHolder.callButton.setOnClickListener(this);
+        viewHolder.nameTextView.setText(arrUser.get(position).getName());
+        viewHolder.phoneTextView.setText(arrUser.get(position).getAge());
         if (arrUser.get(position).getImageBitmap() != null) {
-            imageView.setImageBitmap(arrUser.get(position).getImageBitmap());
-            imageView.setRotation(-90);
+            viewHolder.imageView.setImageBitmap(arrUser.get(position).getImageBitmap());
+            viewHolder.imageView.setRotation(-90);
         }
         return convertView;
     }

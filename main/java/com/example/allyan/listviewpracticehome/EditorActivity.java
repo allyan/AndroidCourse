@@ -1,11 +1,17 @@
 package com.example.allyan.listviewpracticehome;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -14,11 +20,19 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import static android.R.attr.name;
+import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
+import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 
-public class EditorActivity extends AppCompatActivity {
+public class EditorActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     static EditText nameET;
@@ -29,15 +43,17 @@ public class EditorActivity extends AppCompatActivity {
     private boolean working;
     private int position;
     public static int REQUEST_IMAGE_CAPTURE = 14;
+    String mCurrentPhotoPath;
+    static int counter;
+    Handler handler;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getSupportActionBar().hide();
         setContentView(R.layout.activity_editor);
-
 
 
         working = false;
@@ -49,14 +65,21 @@ public class EditorActivity extends AppCompatActivity {
 
 
         Intent intent = getIntent();
-        try{
+        try {
 
             position = Integer.parseInt(intent.getStringExtra("position"));
             nameET.setText(MainActivity.arrUser.get(position).getName());
             ageET.setText(MainActivity.arrUser.get(position).getAge());
             buttonEA.setText("update");
+            if (MainActivity.arrUser.get(position).getImageBitmap() != null) {
+                imageView.setOnClickListener(this);
+                imageView.setRotation(-90);
+                imageBitmap = MainActivity.arrUser.get(position).getImageBitmap();
+                imageView.setImageBitmap(MainActivity.arrUser.get(position).getImageBitmap());
+            }
+
             working = true;
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             working = false;
             System.out.println("oooooppppsssss");
         }
@@ -68,11 +91,11 @@ public class EditorActivity extends AppCompatActivity {
         Intent intent = new Intent();
         String name = nameET.getText().toString();
         String age = ageET.getText().toString();
-        if(imageBitmap != null){
+        if (imageBitmap != null) {
             intent.putExtra("photo", imageBitmap);
         }
 
-        if(working){
+        if (working) {
             intent.putExtra("working", working);
             intent.putExtra("position", position);
         }
@@ -98,17 +121,50 @@ public class EditorActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && data != null) {
-
             Bundle extras = data.getExtras();
-
             imageBitmap = (Bitmap) extras.get("data");
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
-
+            imageView.setOnClickListener(this);
             imageView.setRotation(-90);
             imageView.setImageBitmap(imageBitmap);
-        }
-        else{
+
+            getOutputMediaFile(MEDIA_TYPE_IMAGE);
+        } else {
             Toast.makeText(this, "You don`t get photo", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onClick(View view) {
+        Intent intent = new Intent(this, ImagePreview.class);
+        intent.putExtra("Image", imageBitmap);
+        startActivity(intent);
+    }
+
+    public File getOutputMediaFile(int type) {
+        String filename = "UserPhotos";
+        File file = new File(this.getFilesDir(), filename);
+        file.mkdirs();
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File mediaFile;
+        if (type == MEDIA_TYPE_IMAGE) {
+            mediaFile = new File(file.getPath() + File.separator +
+                    "IMG_" + timeStamp + ".jpg");
+
+//            System.out.println(mediaFile.getAbsolutePath());
+        } else if (type == MEDIA_TYPE_VIDEO) {
+            mediaFile = new File(file.getPath() + File.separator +
+                    "VIDEO_" + timeStamp + ".mp4");
+        } else {
+            return null;
+        }
+        try {
+            FileOutputStream fos = new FileOutputStream(mediaFile);
+//            System.out.println(mediaFile.getPath() + " , " + myDir);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return mediaFile;
     }
 }
